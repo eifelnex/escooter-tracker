@@ -1,0 +1,15 @@
+[Unit]
+Description=E-Scooter Data Collector Timer
+Documentation=https://github.com/your-repo/escooter-tracker
+Requires=escooter-tracker.service
+
+[Timer]
+# Run every minute
+OnCalendar=*:0/1
+# Start immediately on boot if a run was missed
+Persistent=true
+# Allow for some timing jitter to reduce load spikes
+AccuracySec=10s
+
+[Install]
+WantedBy=timers.target
