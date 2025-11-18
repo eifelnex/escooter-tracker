@@ -1,6 +1,6 @@
 # E-Scooter Data Tracker for Raspberry Pi
 
-Automated data collection system for tracking e-scooter positions and battery levels in the Tübingen-Reutlingen region over time.
+Automated data collection system for tracking e-scooter positions and battery levels in the BW region over time.
 
 ## Features
 ## Data Collected
