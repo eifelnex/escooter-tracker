@@ -1,13 +1,5 @@
 #!/usr/bin/env python3
-"""
-E-Scooter Data Collector for Raspberry Pi
 
-Collects e-scooter data from MobiData-BW API and stores changes to SQLite database.
-Tracks ALL vehicles from ALL providers matching keywords: dott, bolt, voi, zeus
-across Baden-Württemberg. Only writes new rows when position or battery changes.
-
-Run every minute via systemd timer.
-"""
 
 import sqlite3
 import json
@@ -396,8 +388,8 @@ def collect_vehicles():
         response = requests.get(gbfs_base_url, timeout=30)
         gbfs_data = response.json()
 
-        # Query ALL providers matching keywords: dott, bolt, voi, zeus
-        provider_keywords = ['dott', 'bolt', 'voi', 'zeus']
+        # Query ALL providers matching keywords: dott, bolt, voi, zeus, hopp, yoio, lime
+        provider_keywords = ['dott', 'bolt', 'voi', 'zeus', 'hopp', 'yoio', 'lime']
 
         systems = gbfs_data['systems']
         scooter_systems = [s for s in systems
@@ -461,8 +453,8 @@ def collect_stations():
         response = requests.get(gbfs_base_url, timeout=30)
         gbfs_data = response.json()
 
-        # Query ALL providers matching keywords: dott, bolt, voi, zeus
-        provider_keywords = ['dott', 'bolt', 'voi', 'zeus']
+        # Query ALL providers matching keywords: dott, bolt, voi, zeus, hopp, yoio, lime
+        provider_keywords = ['dott', 'bolt', 'voi', 'zeus', 'hopp', 'yoio', 'lime']
 
         systems = gbfs_data['systems']
         scooter_systems = [s for s in systems
@@ -572,7 +564,6 @@ def main():
             for disappeared_id in disappeared_vehicle_ids:
                 cached_data = last_fetch_cache[disappeared_id]
 
-                # Insert disappearance event with last known data
                 cursor.execute('''
                     INSERT OR IGNORE INTO vehicle_events (
                         vehicle_id, timestamp, provider, lat, lon,
