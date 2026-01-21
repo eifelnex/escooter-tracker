@@ -1,0 +1,18 @@
+version: '3.8'
+services:
+  osm-postgis:
+    image: postgis/postgis:16-3.4
+    container_name: osm-postgis
+    environment:
+      POSTGRES_DB: osm
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - osm-data:/var/lib/postgresql/data
+      - C:\valhalla_tiles:/osm-data
+    shm_size: 2g
+
+volumes:
+  osm-data:

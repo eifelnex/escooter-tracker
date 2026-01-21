@@ -1,0 +1,430 @@
+amenity:
+  sustenance:
+  - restaurant
+  - cafe
+  - bar
+  - pub
+  - fast_food
+  - food_court
+  - biergarten
+  - ice_cream
+  - bbq
+  education:
+  - school
+  - university
+  - college
+  - kindergarten
+  - library
+  - language_school
+  - music_school
+  - driving_school
+  - research_institute
+  - training
+  - prep_school
+  - childcare
+  healthcare:
+  - hospital
+  - clinic
+  - doctors
+  - dentist
+  - pharmacy
+  - veterinary
+  - nursing_home
+  - social_facility
+  - baby_hatch
+  - blood_donation
+  financial:
+  - bank
+  - atm
+  - bureau_de_change
+  - money_transfer
+  entertainment:
+  - cinema
+  - theatre
+  - nightclub
+  - casino
+  - arts_centre
+  - community_centre
+  - events_venue
+  - music_venue
+  - conference_centre
+  - studio
+  - planetarium
+  - gambling
+  - love_hotel
+  - stripclub
+  - swingerclub
+  - brothel
+  civic:
+  - townhall
+  - courthouse
+  - police
+  - fire_station
+  - prison
+  - embassy
+  - public_building
+  - ranger_station
+  - register_office
+  public_service:
+  - post_office
+  - post_box
+  - telephone
+  - toilets
+  - drinking_water
+  - vending_machine
+  - recycling
+  - waste_basket
+  - bench
+  - shelter
+  - shower
+  - water_point
+  - sanitary_dump_station
+  - clock
+  - lounger
+  - give_box
+  - letter_box
+  - parcel_locker
+  transportation:
+  - fuel
+  - charging_station
+  - taxi
+  - car_rental
+  - car_sharing
+  - bicycle_rental
+  - car_wash
+  - ferry_terminal
+  - boat_rental
+  - vehicle_inspection
+  - driver_training
+  - motorcycle_rental
+  parking:
+  - parking
+  - parking_space
+  - bicycle_parking
+  - motorcycle_parking
+  - parking_entrance
+  bus:
+  - bus_station
+  religious:
+  - place_of_worship
+  - grave_yard
+  - crematorium
+  - monastery
+  commercial:
+  - coworking
+shop:
+  retail:
+  - supermarket
+  - convenience
+  - bakery
+  - butcher
+  - greengrocer
+  - seafood
+  - cheese
+  - chocolate
+  - coffee
+  - tea
+  - deli
+  - dairy
+  - farm
+  - frozen_food
+  - health_food
+  - organic
+  - pasta
+  - pastry
+  - spices
+  - wine
+  - alcohol
+  - beverages
+  - department_store
+  - mall
+  - general
+  - kiosk
+  - variety_store
+  - clothes
+  - shoes
+  - fashion
+  - boutique
+  - leather
+  - bag
+  - jewelry
+  - watches
+  - accessories
+  - electronics
+  - mobile_phone
+  - computer
+  - hifi
+  - appliance
+  - electrical
+  - video
+  - video_games
+  - radiotechnics
+  - furniture
+  - hardware
+  - doityourself
+  - garden_centre
+  - houseware
+  - kitchen
+  - bed
+  - carpet
+  - curtain
+  - interior_decoration
+  - bathroom_furnishing
+  - glaziery
+  - doors
+  - tiles
+  - lighting
+  - paint
+  - trade
+  - car
+  - car_parts
+  - car_repair
+  - bicycle
+  - motorcycle
+  - tyres
+  - fuel
+  - optician
+  - hairdresser
+  - beauty
+  - chemist
+  - cosmetics
+  - perfumery
+  - hearing_aids
+  - herbalist
+  - massage
+  - tattoo
+  - medical_supply
+  - nutrition_supplements
+  - travel_agency
+  - laundry
+  - dry_cleaning
+  - copyshop
+  - money_lender
+  - pawnbroker
+  - ticket
+  - photo
+  - e-cigarette
+  - cannabis
+  - tobacco
+  - lottery
+  - newsagent
+  - bookmaker
+  - books
+  - florist
+  - gift
+  - stationery
+  - toys
+  - sports
+  - outdoor
+  - music
+  - musical_instrument
+  - pet
+  - art
+  - antiques
+  - second_hand
+  - charity
+  - funeral_directors
+tourism:
+  accommodation:
+  - hotel
+  - hostel
+  - motel
+  - guest_house
+  - chalet
+  - apartment
+  - camp_site
+  - caravan_site
+  - alpine_hut
+  - wilderness_hut
+  - camp_pitch
+  attraction:
+  - museum
+  - gallery
+  - attraction
+  - viewpoint
+  - artwork
+  - theme_park
+  - zoo
+  - aquarium
+  - information
+  - picnic_site
+  - 'yes'
+leisure:
+  sports:
+  - sports_centre
+  - stadium
+  - swimming_pool
+  - fitness_centre
+  - pitch
+  - track
+  - golf_course
+  - ice_rink
+  - horse_riding
+  - sports_hall
+  - swimming_area
+  recreation:
+  - park
+  - playground
+  - garden
+  - dog_park
+  - nature_reserve
+  - picnic_table
+  - beach_resort
+  - water_park
+  - miniature_golf
+  - common
+  - recreation_ground
+  - disc_golf_course
+  - outdoor_seating
+  - marina
+  - slipway
+  entertainment:
+  - amusement_arcade
+  - bowling_alley
+  - escape_game
+  - hackerspace
+  - dance
+  - bandstand
+  - bird_hide
+  - firepit
+  - fishing
+  - adult_gaming_centre
+  - sauna
+  - tanning_salon
+public_transport:
+  public_transport:
+  - stop_position
+  - platform
+  - station
+  - stop_area
+railway:
+  public_transport:
+  - station
+  - halt
+  - train_station_entrance
+  - stop
+  - tram_stop
+  - subway_entrance
+  - light_rail
+highway:
+  public_transport:
+  - bus_stop
+  - platform
+office:
+  commercial:
+  - company
+  - it
+  - lawyer
+  - accountant
+  - architect
+  - consulting
+  - estate_agent
+  - financial
+  - insurance
+  - marketing
+  - newspaper
+  - tax_advisor
+  - telecommunication
+  - travel_agent
+  - engineering
+  - advertising_agency
+  - employment_agency
+  - notary
+  - translator
+  civic:
+  - government
+  - administrative
+  - diplomatic
+  - political_party
+  - ngo
+  - quango
+  - association
+  - foundation
+  - charity
+  - union
+  healthcare:
+  - physician
+  - therapist
+  education:
+  - educational_institution
+  - tutoring
+  - research
+  - university
+building:
+  residential:
+  - residential
+  - apartments
+  - house
+  - detached
+  - semidetached_house
+  - terrace
+  - dormitory
+  - bungalow
+  - cabin
+  - farm
+  - houseboat
+  - static_caravan
+  - ger
+  commercial:
+  - commercial
+  - office
+  - kiosk
+  retail:
+  - retail
+  - supermarket
+  industrial:
+  - industrial
+  - warehouse
+  - factory
+  - manufacture
+  civic:
+  - civic
+  - government
+  - public
+  - fire_station
+  public_transport:
+  - train_station
+  - transportation
+  healthcare:
+  - hospital
+  education:
+  - school
+  - university
+  - kindergarten
+  - college
+  religious:
+  - church
+  - chapel
+  - cathedral
+  - mosque
+  - synagogue
+  - temple
+  - shrine
+  - religious
+  accommodation:
+  - hotel
+  - hostel
+  parking:
+  - garage
+  - garages
+  - carport
+  - parking
+  agricultural:
+  - barn
+  - farm_auxiliary
+  - greenhouse
+  - stable
+  - sty
+  - cowshed
+  - slurry_tank
+  - silo
+  building_other:
+  - 'yes'
+  - roof
+  - shed
+  - hut
+  - construction
+  - ruins
+  - container
+  - tent
+  - service
