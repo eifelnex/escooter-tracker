@@ -22,9 +22,7 @@ venv/
 env/
 .env
 
-# Jupyter
-.ipynb_checkpoints/
-*.ipynb
+
 
 # Cache
 last_fetch_cache.json
