@@ -694,3 +694,32 @@ def plot_maintenance_time_gaps(df: pd.DataFrame, time_window_minutes=30, distanc
 
     plt.tight_layout()
     plt.show()
+
+
+def filter_known_issues(df: pd.DataFrame, verbose=True):
+    """
+    Filter out known data quality issues from trip data.
+    Expects 'city' and 'd_time' columns.
+
+    Parameters:
+    -----------
+    df : DataFrame with trip data (must have 'city' and 'd_time' columns)
+    verbose : print filter statistics
+
+    Returns:
+    --------
+    Filtered DataFrame
+    """
+    original_len = len(df)
+    hour = pd.to_datetime(df['d_time']).dt.hour
+
+    # Filter 1: Saarbrücken 3am spike (ID resets, not real trips)
+    saar_3am_mask = (df['city'] == 'Saarbrücken') & (hour == 3)
+    saar_3am_removed = saar_3am_mask.sum()
+    df = df[~saar_3am_mask]
+
+    if verbose:
+        print(f"Filtered out {original_len - len(df):,} trips ({(original_len - len(df))/original_len*100:.1f}%):")
+        print(f"  - Saarbrücken 3am: {saar_3am_removed:,}")
+
+    return df
