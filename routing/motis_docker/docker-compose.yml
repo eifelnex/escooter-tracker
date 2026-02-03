@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  motis:
+    image: ghcr.io/motis-project/motis:latest
+    container_name: motis-local
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./data:/data
+    working_dir: /data
+    command: ["motis", "server"]
+    restart: unless-stopped

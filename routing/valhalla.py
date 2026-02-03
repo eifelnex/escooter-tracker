@@ -241,6 +241,15 @@ def get_routes_by_source(
     results_dist = [None] * len(candidates_df)
     results_time = [None] * len(candidates_df)
 
+    def haversine_km(lat1, lon1, lat2, lon2):
+        import math
+        R = 6371
+        lat1, lon1, lat2, lon2 = map(math.radians, [lat1, lon1, lat2, lon2])
+        dlat = lat2 - lat1
+        dlon = lon2 - lon1
+        a = math.sin(dlat/2)**2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon/2)**2
+        return 2 * R * math.asin(math.sqrt(a))
+
     def route_group(args):
         indices, source, targets = args
 
@@ -261,21 +270,34 @@ def get_routes_by_source(
             "units": "kilometers"
         }
 
-        response = session.post(f"{base_url}/sources_to_targets", json=request_body)
-        response.raise_for_status()
-        data = response.json()
+        try:
+            response = session.post(f"{base_url}/sources_to_targets", json=request_body)
+            response.raise_for_status()
+            data = response.json()
 
-        matrix = data["sources_to_targets"]
-        row = matrix[0]
+            matrix = data["sources_to_targets"]
+            row = matrix[0]
 
-        results = []
-        for cell in row:
-            results.append({
-                "distance_km": round(cell["distance"], 2),
-                "duration_min": round(cell["time"] / 60, 1)
-            })
+            results = []
+            for i, cell in enumerate(row):
+                if cell.get("distance") is not None:
+                    results.append({
+                        "distance_km": round(cell["distance"], 2),
+                        "duration_min": round(cell["time"] / 60, 1)
+                    })
+                else:
+                    # Fallback to haversine * 1.3
+                    dist = haversine_km(source[0], source[1], targets[i][0], targets[i][1]) * 1.3
+                    results.append({"distance_km": round(dist, 2), "duration_min": round(dist / 17 * 60, 1)})
 
-        return indices, results
+            return indices, results
+        except Exception:
+            # Fallback to haversine * 1.3 for all routes
+            results = []
+            for t in targets:
+                dist = haversine_km(source[0], source[1], t[0], t[1]) * 1.3
+                results.append({"distance_km": round(dist, 2), "duration_min": round(dist / 17 * 60, 1)})
+            return indices, results
 
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         futures = [executor.submit(route_group, g) for g in groups]
