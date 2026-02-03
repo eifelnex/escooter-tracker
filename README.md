@@ -1,4 +1,5 @@
-# E-Scooter GBFS Tracker
+# Faster, Profitable, Yet Peripheral:
+The Role of Shared E-Scooters in Urban Mobility
 
 A comprehensive data analysis and research project for tracking e-scooter usage patterns in the Baden-Württemberg region of Germany, Switzerland, and surrounding areas. The project combines real-time GBFS (General Bikeshare Feed Specification) data collection with spatial analysis, public transport comparison, and business case modeling.
 
