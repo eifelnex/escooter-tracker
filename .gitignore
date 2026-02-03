@@ -27,3 +27,6 @@ env/
 # Cache
 last_fetch_cache.json
 .DS_Store
+
+# MOTIS data (large files, download via setup script)
+routing/motis_docker/data/
