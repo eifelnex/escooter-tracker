@@ -1,6 +1,9 @@
-"""Probabilistic trip matching using distance, speed, and range consumption factors."""
-
 import os
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
 import numpy as np
 import pandas as pd
 from scipy.stats import truncnorm, lognorm, norm
@@ -14,20 +17,23 @@ from routing import get_routes_by_source
 
 @dataclass
 class MatcherParams:
-    """Parameters for the three-factor probabilistic model."""
+    # Speed prior: truncated normal (km/h)
     mu_speed: float = 14.0
     sigma_speed: float = 3.5
     speed_min: float = 5.0
     speed_max: float = 23.0
 
+    # Distance prior: log-normal (km)
     mu_dist: float = 0.5
     sigma_dist: float = 0.8
 
+    # Range consumption model: expected = distance * efficiency
     range_efficiency: float = 1.1
     range_sigma_base: float = 1.0
     range_sigma_scale: float = 0.3
 
-    max_time_hours: float = 1.0
+    # Hard filters for candidate generation
+    max_time_hours: float = 2.0
     max_distance_km: float = 8.0
     min_range_drain_km: float = 0.3
     min_route_km: float = 0.1
@@ -50,7 +56,6 @@ class MatcherParams:
 
 @dataclass
 class MatchResult:
-    """Result of matching."""
     candidates: pd.DataFrame
     best_matches: pd.DataFrame
     params: MatcherParams
@@ -59,8 +64,6 @@ class MatchResult:
 
 
 class TripMatcher:
-    """Trip matcher using P(distance) * P(speed) * P(range_consumed | distance)."""
-
     def __init__(self, params: MatcherParams):
         self.params = params
 
@@ -69,20 +72,11 @@ class TripMatcher:
         disappeared: pd.DataFrame,
         first_seen: pd.DataFrame,
         time_bin_minutes: int = 30,
-        show_progress: bool = True,
-        verbose: bool = True
+        show_progress: bool = True
     ) -> pd.DataFrame:
         candidates = []
         max_dist_rad = self.params.max_distance_km / 6371.0
         bins_to_check = int(np.ceil(self.params.max_time_hours * 60 / time_bin_minutes))
-
-        if verbose:
-            print(f"\n=== Building Candidates ===")
-            print(f"Hard filters:")
-            print(f"  max_time_hours: {self.params.max_time_hours}")
-            print(f"  max_distance_km: {self.params.max_distance_km}")
-            print(f"  min_route_km: {self.params.min_route_km}")
-            print(f"  min_range_drain_km: {self.params.min_range_drain_km}")
 
         providers = disappeared['provider'].unique()
         iterator = tqdm(providers, desc="Building candidates") if show_progress else providers
@@ -109,6 +103,7 @@ class TripMatcher:
                     (f_vtype['timestamp'] - min_time).dt.total_seconds() // (time_bin_minutes * 60)
                 ).astype(int)
 
+                # Build spatial index per time bin for efficient neighbor queries
                 fs_by_bin = {}
                 for bin_id, group in f_vtype.groupby('time_bin'):
                     coords = np.radians(group[['lat', 'lon']].values)
@@ -189,11 +184,6 @@ class TripMatcher:
 
         candidates_df = candidates_df.sort_values('d_idx').reset_index(drop=True)
 
-        if verbose:
-            print(f"\nPre-routing candidates: {len(candidates_df):,}")
-            n_sources = candidates_df['d_idx'].nunique()
-            print(f"Routing {n_sources:,} sources to their targets...")
-
         route_results = get_routes_by_source(
             candidates_df,
             base_url=self.params.routing_base_url,
@@ -204,18 +194,14 @@ class TripMatcher:
         candidates_df['opt_route_km'] = route_results['distance_km']
         candidates_df['opt_route_min'] = route_results['duration_min']
 
-        n_before = len(candidates_df)
         candidates_df = candidates_df[candidates_df['opt_route_km'].notna()]
         candidates_df = candidates_df[candidates_df['opt_route_km'] >= self.params.min_route_km]
         candidates_df = candidates_df[candidates_df['d_range_km'] >= candidates_df['opt_route_km']]
 
-        if verbose:
-            print(f"Filtered: {n_before - len(candidates_df):,}")
-            print(f"Final candidates: {len(candidates_df):,}")
-
         return candidates_df
 
-    def score_candidates(self, candidates: pd.DataFrame, verbose: bool = True) -> pd.DataFrame:
+    def score_candidates(self, candidates: pd.DataFrame) -> pd.DataFrame:
+        """Score using P(distance) * P(speed) * P(range|distance)."""
         candidates = candidates.copy()
 
         opt_route_km = candidates['opt_route_km'].values
@@ -225,9 +211,11 @@ class TripMatcher:
         speed = opt_route_km / delta_t_hours
         candidates['speed'] = speed
 
+        # P(distance) - log-normal prior on trip distances
         rv_dist = lognorm(s=self.params.sigma_dist, scale=np.exp(self.params.mu_dist))
         log_p_distance = rv_dist.logpdf(opt_route_km)
 
+        # P(speed) - truncated normal, -inf outside bounds
         log_p_speed = np.full_like(speed, -np.inf)
         valid_speed = (speed >= self.params.speed_min) & (speed <= self.params.speed_max)
         if np.any(valid_speed):
@@ -237,6 +225,7 @@ class TripMatcher:
             )
             log_p_speed[valid_speed] = rv_speed.logpdf(speed[valid_speed])
 
+        # P(range|distance) - range should be ~distance * efficiency
         expected_range = opt_route_km * self.params.range_efficiency
         range_sigma = self.params.range_sigma_base + self.params.range_sigma_scale * opt_route_km
         log_p_range = norm.logpdf(range_consumed, loc=expected_range, scale=range_sigma)
@@ -248,21 +237,17 @@ class TripMatcher:
         candidates['log_p_range'] = log_p_range
         candidates['score'] = scores
 
-        valid_scores = np.isfinite(scores)
-        n_invalid = (~valid_scores).sum()
-        if n_invalid > 0 and verbose:
-            print(f"  Filtered {n_invalid:,} candidates with invalid scores")
-
-        return candidates[valid_scores]
+        return candidates[np.isfinite(scores)]
 
     def compute_assignments(
         self,
         candidates: pd.DataFrame,
-        null_score: float = None,
-        verbose: bool = True
+        null_score: float = None
     ) -> pd.DataFrame:
+        """Compute match probabilities using softmax with null hypothesis."""
         candidates = candidates.copy()
 
+        # Auto-calibrate null score from unambiguous matches (single candidate)
         if null_score is None:
             counts = candidates.groupby('d_idx').size()
             unambiguous_idx = counts[counts == 1].index
@@ -272,12 +257,8 @@ class TripMatcher:
                 valid_scores = unambiguous['score'].values
                 valid_scores = valid_scores[np.isfinite(valid_scores)]
                 null_score = np.percentile(valid_scores, self.params.null_score_percentile)
-                if verbose:
-                    print(f"  Auto null_score: {null_score:.2f} (p{self.params.null_score_percentile:.0f})")
             else:
                 null_score = -5.0
-                if verbose:
-                    print(f"  Default null_score: {null_score:.2f}")
 
         def softmax_with_null(group):
             scores = group['score'].values
@@ -295,18 +276,10 @@ class TripMatcher:
 
         return candidates
 
-    def get_best_matches(self, candidates: pd.DataFrame, verbose: bool = True) -> pd.DataFrame:
+    def get_best_matches(self, candidates: pd.DataFrame) -> pd.DataFrame:
         idx = candidates.groupby('d_idx')['prob'].idxmax()
         best_matches = candidates.loc[idx].copy()
-
-        n_before = len(best_matches)
-        best_matches = best_matches[best_matches['prob_null'] <= self.params.max_null_prob]
-        n_filtered = n_before - len(best_matches)
-
-        if n_filtered > 0 and verbose:
-            print(f"  Filtered {n_filtered:,} matches with prob_null > {self.params.max_null_prob:.2f}")
-
-        return best_matches
+        return best_matches[best_matches['prob_null'] <= self.params.max_null_prob]
 
     def fit(
         self,
@@ -317,37 +290,18 @@ class TripMatcher:
         candidates_cache: str = None
     ) -> MatchResult:
         if candidates_cache and os.path.exists(candidates_cache):
-            print(f"Loading cached candidates from {candidates_cache}...")
             candidates = pd.read_parquet(candidates_cache)
             candidates['d_time'] = pd.to_datetime(candidates['d_time'])
             candidates['f_time'] = pd.to_datetime(candidates['f_time'])
-            print(f"Loaded {len(candidates):,} candidates")
         else:
             candidates = self.build_candidates(
                 disappeared, first_seen,
                 time_bin_minutes=time_bin_minutes,
-                show_progress=show_progress,
-                verbose=True
+                show_progress=show_progress
             )
 
         if 'score' not in candidates.columns:
-            print(f"\n=== Scoring Candidates ===")
-            print(f"Model: P(distance) * P(speed) * P(range|distance)")
-            print(f"  Distance prior: LogNormal(mu={self.params.mu_dist:.2f}, sigma={self.params.sigma_dist:.2f})")
-            print(f"  Speed prior: TruncNormal(mu={self.params.mu_speed:.1f}, sigma={self.params.sigma_speed:.1f}, [{self.params.speed_min}-{self.params.speed_max}])")
-            print(f"  Range: Normal(distance*{self.params.range_efficiency:.1f}, {self.params.range_sigma_base:.1f} + {self.params.range_sigma_scale:.1f}*distance)")
-
-            candidates = self.score_candidates(candidates, verbose=True)
-
-        print(f"Valid candidates: {len(candidates):,}")
-
-        n_d = candidates['d_idx'].nunique()
-        print(f"Disappearances with candidates: {n_d:,}")
-
-        print(f"\nCandidate statistics:")
-        print(f"  Distance: {candidates['opt_route_km'].median():.2f} km (median)")
-        print(f"  Speed: {candidates['speed'].median():.1f} km/h (median)")
-        print(f"  Score: {candidates['score'].median():.2f} (median)")
+            candidates = self.score_candidates(candidates)
 
         return MatchResult(
             candidates=candidates,
@@ -374,9 +328,7 @@ def prepare_events(df: pd.DataFrame, use_recalibrated_range: bool = True) -> Tup
         first_seen.loc[has_recalibrated, 'current_range_meters'] = (
             first_seen.loc[has_recalibrated, 'recalibrated_current_range_meters']
         )
-        print(f"Using recalibrated range for {has_recalibrated.sum():,} first_seen events")
 
-    print(f"Prepared {len(disappeared):,} disappearance events, {len(first_seen):,} first_seen events")
     return disappeared, first_seen
 
 
@@ -385,8 +337,6 @@ def analyze_matches(result: MatchResult):
 
     candidates = result.candidates
     best_matches = result.best_matches
-
-    print(f"Candidates: {len(candidates):,}, Matches: {len(best_matches):,}")
 
     fig, axes = plt.subplots(2, 3, figsize=(15, 10))
 
